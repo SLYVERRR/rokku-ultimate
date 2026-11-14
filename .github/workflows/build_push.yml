@@ -242,7 +242,7 @@ jobs:
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: ${{ env.VERSION_TAG }}
-          name: Rokku ${{ env.VERSION_TAG }}
+          name: Yōkai Ultimate ${{ env.VERSION_TAG }}
           body: |
             ${{ github.event.inputs.message }}
 
@@ -273,52 +273,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # rokku-nightly is a near-empty repo that only hosts release binaries - its default
-      # branch never moves on its own. Without this, action-gh-release below would create
-      # each new tag pointing at that same stale, unmoving commit (since we don't pass
-      # target_commitish), so every nightly's tag/release "created_at" would show that one
-      # fixed date instead of when it was actually built.
-      - name: Advance rokku-nightly default branch for an accurate release date
-        if: startsWith(env.VERSION_TAG, 'r')
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.NIGHTLY_PAT }}
-        run: |
-          set -e
-          REPO="rokku-app/rokku-nightly"
-          PARENT_SHA=$(gh api "repos/$REPO/git/refs/heads/master" --jq '.object.sha')
-          TREE_SHA=$(gh api "repos/$REPO/git/commits/$PARENT_SHA" --jq '.tree.sha')
-
-          NEW_SHA=$(gh api "repos/$REPO/git/commits" -X POST --input - --jq '.sha' <<JSON
-          {
-            "message": "nightly ${{ env.VERSION_TAG }} (${{ env.COMMIT_SHORT_HASH }})",
-            "tree": "$TREE_SHA",
-            "parents": ["$PARENT_SHA"]
-          }
-          JSON
-          )
-
-          gh api "repos/$REPO/git/refs/heads/master" -X PATCH -f sha="$NEW_SHA"
-
       - name: Create Nightly
         if: startsWith(env.VERSION_TAG, 'r')
-        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
-          token: ${{ secrets.NIGHTLY_PAT }}
-          repository: rokku-app/rokku-nightly
           tag_name: ${{ env.VERSION_TAG }}
-          name: Rokku Nightly (${{ env.VERSION_TAG }})
+          name: Yōkai Ultimate (${{ env.VERSION_TAG }})
           body: |
-            > [!CAUTION]
-            > _**This alpha version is for testing only!**_
-            >
-            > This build is triggered by commit [`${{ env.COMMIT_SHORT_HASH }}`](https://github.com/rokku-app/rokku/commit/${{ env.COMMIT_HASH }})
+            ### Yōkai Ultimate (${{ env.VERSION_TAG }})
+            Built from commit [`${{ env.COMMIT_SHORT_HASH }}`](https://github.com/${{ github.repository }}/commit/${{ env.COMMIT_HASH }})
 
-            It is not ready for daily use and we do not guarantee its usability. Please download the latest stable releases instead (https://github.com/rokku-app/rokku/releases/latest). If you insist, please be sure to ALWAYS backup before updating.
+            **Features in this build:**
+            - **Autoscroll**: Timed hands-free webtoon scrolling with speed control and gesture pause/resume
+            - **M3 Yōkai UI**: Bottom bar, gesture navigation, and AMOLED pitch black
+            - **Recommendations**: Integrated series suggestions
+            - **Smart Updates & Backgrounds**: Cover color tinting and release predictions
+            - **Persistent SLYVERRR Keystore** for seamless in-place updates
 
-            ${{ steps.changelog.outputs.CHANGELOG }}
             ---
-
             ### Checksums
 
             | Variant | SHA-256 |
@@ -328,10 +300,6 @@ jobs:
             | armeabi-v7a | ${{ env.APK_ARMEABI_V7A_SHA }}
             | x86 | ${{ env.APK_X86_SHA }} |
             | x86_64 | ${{ env.APK_X86_64_SHA }} |
-
-            > [!TIP]
-            >
-            > If you are unsure which version to download then go with **rokku-${{ env.VERSION_TAG }}.apk**
           files: |
             rokku-${{ env.VERSION_TAG }}.apk
             rokku-arm64-v8a-${{ env.VERSION_TAG }}.apk
@@ -339,17 +307,6 @@ jobs:
             rokku-x86-${{ env.VERSION_TAG }}.apk
             rokku-x86_64-${{ env.VERSION_TAG }}.apk
           draft: false
-          prerelease: true
-
-      # Nightly releases are published immediately (not drafts), so the site can be
-      # rebuilt right away. Stable/beta releases are drafts (see "Create Release" above)
-      # and are dispatched separately from release_published.yml when a maintainer
-      # actually publishes them.
-      - name: Notify website of new nightly
-        if: startsWith(env.VERSION_TAG, 'r')
-        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4
-        with:
-          token: ${{ secrets.WEBSITE_DISPATCH_TOKEN }}
-          repository: rokku-app/rokku-app.github.io
-          event-type: app_release
-          client-payload: '{"tag": "${{ env.VERSION_TAG }}", "stage": "nightly"}'
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -51,5 +51,13 @@ class ReaderPreferences(private val preferenceStore: PreferenceStore) {
 
     fun webtoonDoubleTapZoomEnabled() = preferenceStore.getBoolean("pref_enable_double_tap_zoom_webtoon", true)
 
+    fun autoscrollInterval() = preferenceStore.getFloat("pref_autoscroll_interval", 3f)
+
+    fun smoothAutoScroll() = preferenceStore.getBoolean("pref_smooth_auto_scroll", true)
+
+    fun autoscrollGestures() = preferenceStore.getBoolean("pref_autoscroll_gestures", true)
+
+    fun autoscrollGestureToasts() = preferenceStore.getBoolean("pref_autoscroll_gesture_toasts", true)
+
     fun debugMode() = preferenceStore.getBoolean("pref_enable_reader_debug_mode", BuildConfig.DEBUG)
 }

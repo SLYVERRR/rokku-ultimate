@@ -414,6 +414,20 @@ class SettingsReaderController : SettingsLegacyController() {
             }
         }
         preferenceCategory {
+            titleRes = MR.strings.autoscroll
+
+            switchPreference {
+                bindTo(readerPreferences.smoothAutoScroll())
+                titleRes = MR.strings.pref_smooth_scroll
+            }
+
+            switchPreference {
+                bindTo(readerPreferences.autoscrollGestures())
+                titleRes = MR.strings.autoscroll_gestures
+                summaryRes = MR.strings.autoscroll_gestures_summary
+            }
+        }
+        preferenceCategory {
             titleRes = MR.strings.navigation
 
             switchPreference {

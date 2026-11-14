@@ -154,6 +154,7 @@ import eu.kanade.tachiyomi.widget.doOnStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
@@ -173,6 +174,7 @@ import yokai.util.lang.getString
 import java.io.ByteArrayOutputStream
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
+import kotlin.time.Duration.Companion.seconds
 import java.util.Collections
 import java.util.Locale
 import kotlin.math.abs
@@ -201,6 +203,11 @@ class ReaderActivity : BaseActivity<ReaderActivityBinding>() {
      */
     var menuVisible = false
         private set
+
+    var isAutoScroll = false
+        private set
+
+    private var autoScrollJob: Job? = null
 
     /**
      * Whether the menu should stay visible.
@@ -412,6 +419,18 @@ class ReaderActivity : BaseActivity<ReaderActivityBinding>() {
             }
         reEnableBackPressedCallBack()
 
+        readerPreferences.autoscrollGestures().changes()
+            .onEach { enabled ->
+                (viewer as? WebtoonViewer)?.setAutoScrollGesturesEnabled(enabled)
+            }
+            .launchIn(lifecycleScope)
+
+        readerPreferences.autoscrollGestureToasts().changes()
+            .onEach { enabled ->
+                (viewer as? WebtoonViewer)?.setAutoScrollGestureToastsEnabled(enabled)
+            }
+            .launchIn(lifecycleScope)
+
         viewModel.state
             .map { it.isLoadingAdjacentChapter }
             .distinctUntilChanged()
@@ -505,6 +524,8 @@ class ReaderActivity : BaseActivity<ReaderActivityBinding>() {
      */
     override fun onDestroy() {
         super.onDestroy()
+        autoScrollJob?.cancel()
+        isAutoScroll = false
         viewer?.destroy()
         binding.chaptersSheet.chaptersBottomSheet.adapter = null
         viewer = null
@@ -545,6 +566,12 @@ class ReaderActivity : BaseActivity<ReaderActivityBinding>() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val autoscrollItem = menu.findItem(R.id.action_autoscroll)
+        autoscrollItem?.icon = ContextCompat.getDrawable(
+            this,
+            if (isAutoScroll) R.drawable.ic_pause_24dp else R.drawable.ic_play_arrow_24dp,
+        )
+
         val splitItem = menu.findItem(R.id.action_shift_double_page)
         splitItem?.isVisible = ((viewer as? PagerViewer)?.config?.doublePages ?: false) && !canShowSplitAtBottom()
         binding.chaptersSheet.shiftPageButton.isVisible =
@@ -787,6 +814,10 @@ class ReaderActivity : BaseActivity<ReaderActivityBinding>() {
      */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.action_autoscroll -> {
+                toggleAutoScroll()
+            }
+
             R.id.action_shift_double_page -> {
                 shiftDoublePages()
                 manuallyShiftedPages = true
@@ -795,6 +826,57 @@ class ReaderActivity : BaseActivity<ReaderActivityBinding>() {
             else -> return super.onOptionsItemSelected(item)
         }
         return true
+    }
+
+    fun toggleAutoScroll(enable: Boolean? = null) {
+        val newState = enable ?: !isAutoScroll
+        if (isAutoScroll == newState) return
+        isAutoScroll = newState
+        invalidateOptionsMenu()
+
+        val intervalFloat = readerPreferences.autoscrollInterval().get()
+        val interval = intervalFloat.toDouble().seconds
+
+        (viewer as? WebtoonViewer)?.syncAutoScrollSettings(
+            enabled = newState,
+            interval = interval,
+            forceInterval = true,
+        )
+
+        autoScrollJob?.cancel()
+        if (newState && intervalFloat > 0) {
+            autoScrollJob = lifecycleScope.launch {
+                repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    while (isActive) {
+                        val v = viewer
+                        when (v) {
+                            is PagerViewer -> {
+                                v.moveToNext()
+                                delay(interval)
+                            }
+                            is WebtoonViewer -> {
+                                v.syncAutoScrollSettings(enabled = true, interval = interval)
+                                v.performAutoScrollStep(readerPreferences.smoothAutoScroll().get())
+                                delayAutoScroll(v.autoScrollDelayMillis(), v)
+                            }
+                            else -> delay(100)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun delayAutoScroll(durationMillis: Long, viewer: WebtoonViewer) {
+        var remaining = durationMillis
+        while (remaining > 0) {
+            val slice = remaining.coerceAtMost(100L)
+            delay(slice)
+            remaining -= slice
+            if (viewer.consumeAutoScrollDelayInterrupt()) {
+                break
+            }
+        }
     }
 
     fun shiftDoublePages(forceShift: Boolean? = null, page: ReaderPage? = null) {
@@ -1363,6 +1445,7 @@ class ReaderActivity : BaseActivity<ReaderActivityBinding>() {
     private fun setMenuVisibility(visible: Boolean, animate: Boolean = true) {
         val oldVisibility = menuVisible
         menuVisible = visible
+        (viewer as? WebtoonViewer)?.setAutoScrollUiBlocked(visible)
         if (visible) coroutine?.cancel()
         binding.viewerContainer.requestLayout()
         if (visible) {
@@ -1469,6 +1552,13 @@ class ReaderActivity : BaseActivity<ReaderActivityBinding>() {
             binding.viewerContainer.removeAllViews()
         }
         viewer = newViewer
+        (newViewer as? WebtoonViewer)?.setAutoScrollUiBlocked(menuVisible)
+        (newViewer as? WebtoonViewer)?.setAutoScrollGesturesEnabled(readerPreferences.autoscrollGestures().get())
+        (newViewer as? WebtoonViewer)?.setAutoScrollGestureToastsEnabled(readerPreferences.autoscrollGestureToasts().get())
+        if (isAutoScroll) {
+            val interval = readerPreferences.autoscrollInterval().get().toDouble().seconds
+            (newViewer as? WebtoonViewer)?.syncAutoScrollSettings(enabled = true, interval = interval)
+        }
         binding.viewerContainer.addView(newViewer.getView())
 
         if (newViewer is R2LPagerViewer && !binding.readerNav.pageSeekbar.isVertical) {

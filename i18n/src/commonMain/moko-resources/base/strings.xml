@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Rokku</string>
+    <string name="app_name" translatable="false">Yōkai Ultimate</string>
     <string name="app_short_name" translatable="false">Rokku</string>
     <string name="app_normalized_name" translatable="false">Rokku</string>
     <string name="action_menu_overflow_description">More options</string>
@@ -1262,4 +1262,14 @@
     <string name="crash_screen_description">%s ran into an unexpected error. We suggest you screenshot this message, dump the crash logs, and then share it to a GitHub Issue.</string>
     <string name="crash_screen_restart_application">Restart the application</string>
     <string name="refresh">Refresh</string>
+    <!-- Autoscroll -->
+    <string name="autoscroll">Auto scroll</string>
+    <string name="autoscroll_speed">Auto scroll speed</string>
+    <string name="action_start">Start</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_resume">Resume</string>
+    <string name="pref_smooth_scroll">Smooth scroll</string>
+    <string name="autoscroll_gestures">Autoscroll gestures</string>
+    <string name="autoscroll_gestures_summary">Single tap to pause/resume, swipe up/down to adjust speed, swipe sideways to stop</string>
 </resources>
