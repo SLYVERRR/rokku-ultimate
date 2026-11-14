@@ -26,6 +26,7 @@ import kotlinx.coroutines.cancel
 import uy.kohesive.injekt.injectLazy
 import yokai.domain.ui.settings.ReaderPreferences
 import yokai.i18n.MR
+import yokai.util.lang.getString
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.max
