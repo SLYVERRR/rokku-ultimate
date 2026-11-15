@@ -339,6 +339,7 @@
     <string name="installing">Installing</string>
     <string name="installed">Installed</string>
     <string name="trust">Trust</string>
+    <string name="trust_all">Trust all</string>
     <string name="untrusted">Untrusted</string>
     <string name="uninstall">Uninstall</string>
     <string name="ext_installer_shizuku_stopped">Shizuku is not running</string>

@@ -28,6 +28,17 @@ class TrustExtension(
         }
     }
 
+    fun trustAll(extensions: List<Triple<String, Long, String>>) {
+        sourcePreferences.trustedExtensions().getAndSet { exts ->
+            val set = exts.toMutableSet()
+            extensions.forEach { (pkgName, versionCode, signatureHash) ->
+                set.removeAll { it.startsWith("$pkgName:") }
+                set.add("$pkgName:$versionCode:$signatureHash")
+            }
+            set
+        }
+    }
+
     fun revokeAll() {
         sourcePreferences.trustedExtensions().delete()
     }

@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.databinding.ExtensionCardHeaderBinding
 import eu.kanade.tachiyomi.extension.model.InstalledExtensionsOrder
 import eu.kanade.tachiyomi.ui.base.holder.BaseFlexibleViewHolder
 import eu.kanade.tachiyomi.util.view.setText
+import yokai.i18n.MR
 
 class ExtensionGroupHolder(view: View, adapter: FlexibleAdapter<IFlexible<RecyclerView.ViewHolder>>) :
     BaseFlexibleViewHolder(view, adapter) {
@@ -28,8 +29,14 @@ class ExtensionGroupHolder(view: View, adapter: FlexibleAdapter<IFlexible<Recycl
     @SuppressLint("SetTextI18n")
     fun bind(item: ExtensionGroupItem) {
         binding.title.text = item.name
-        binding.extButton.isVisible = item.canUpdate != null
-        binding.extButton.isEnabled = item.canUpdate == true
+        binding.extButton.isVisible = item.canUpdate != null || item.canTrustAll != null
+        if (item.canTrustAll != null) {
+            binding.extButton.setText(MR.strings.trust_all)
+            binding.extButton.isEnabled = item.canTrustAll == true
+        } else {
+            binding.extButton.setText(MR.strings.update_all)
+            binding.extButton.isEnabled = item.canUpdate == true
+        }
         binding.extSort.isVisible = item.installedSorting != null
         binding.extSort.setText(InstalledExtensionsOrder.fromValue(item.installedSorting ?: 0).nameRes)
         binding.extSort.post {

@@ -18,6 +18,7 @@ data class ExtensionGroupItem(
     val size: Int,
     var canUpdate: Boolean? = null,
     var installedSorting: Int? = null,
+    var canTrustAll: Boolean? = null,
 ) : AbstractHeaderItem<ExtensionGroupHolder>() {
 
     /**

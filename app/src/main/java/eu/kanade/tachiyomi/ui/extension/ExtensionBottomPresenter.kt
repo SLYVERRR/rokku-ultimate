@@ -206,17 +206,24 @@ class ExtensionBottomPresenter : BaseMigrationPresenter<ExtensionBottomSheet>() 
                 ExtensionItem(extension, header, currentDownloads[extension.pkgName])
             }
         }
-        if (installedSorted.isNotEmpty() || untrustedSorted.isNotEmpty()) {
+        if (untrustedSorted.isNotEmpty()) {
+            val header = ExtensionGroupItem(
+                context.getString(MR.strings.untrusted),
+                untrustedSorted.size,
+                canTrustAll = true,
+            )
+            items += untrustedSorted.map { extension ->
+                ExtensionItem(extension, header)
+            }
+        }
+        if (installedSorted.isNotEmpty()) {
             val header = ExtensionGroupItem(
                 context.getString(MR.strings.installed),
-                installedSorted.size + untrustedSorted.size,
+                installedSorted.size,
                 installedSorting = preferences.installedExtensionsOrder().get(),
             )
             items += installedSorted.map { extension ->
                 ExtensionItem(extension, header, currentDownloads[extension.pkgName])
-            }
-            items += untrustedSorted.map { extension ->
-                ExtensionItem(extension, header)
             }
         }
         if (availableSorted.isNotEmpty()) {
@@ -334,6 +341,12 @@ class ExtensionBottomPresenter : BaseMigrationPresenter<ExtensionBottomSheet>() 
     fun trustExtension(pkgName: String, versionCode: Long, signatureHash: String) {
         presenterScope.launch {
             extensionManager.trust(pkgName, versionCode, signatureHash)
+        }
+    }
+
+    fun trustAllExtensions() {
+        presenterScope.launch {
+            extensionManager.trustAll()
         }
     }
 }

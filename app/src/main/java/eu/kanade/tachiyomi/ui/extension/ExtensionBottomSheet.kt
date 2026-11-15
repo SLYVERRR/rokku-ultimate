@@ -244,6 +244,18 @@ class ExtensionBottomSheet @JvmOverloads constructor(context: Context, attrs: At
     }
 
     override fun onUpdateAllClicked(position: Int) {
+        val item = extAdapter?.getItem(position) as? ExtensionGroupItem
+        if (item?.canTrustAll == true) {
+            controller.activity!!.materialAlertDialog()
+                .setTitle(MR.strings.trust_all)
+                .setMessage(MR.strings.untrusted_extension_message)
+                .setPositiveButton(MR.strings.trust) { _, _ ->
+                    presenter.trustAllExtensions()
+                }
+                .setNegativeButton(AR.string.cancel, null)
+                .show()
+            return
+        }
         (controller.activity as? MainActivity)?.showNotificationPermissionPrompt()
         if (basePreferences.extensionInstaller().get() != ExtensionInstaller.SHIZUKU &&
             !presenter.preferences.hasPromptedBeforeUpdateAll().get()

@@ -399,6 +399,18 @@ class ExtensionManager(
         registerNewTrusted(nowTrustedExtensions)
     }
 
+    suspend fun trustAll() {
+        val untrusted = untrustedExtensionsFlow.value.toList()
+        if (untrusted.isEmpty()) return
+
+        trustExtension.trustAll(
+            untrusted.map { Triple(it.pkgName, it.versionCode, it.signatureHash) },
+        )
+
+        _untrustedExtensionsFlow.value = emptyList()
+        registerNewTrusted(untrusted)
+    }
+
     private suspend fun registerNewTrusted(nowTrustedExtensions: List<Extension.Untrusted>) {
         launchNow {
             nowTrustedExtensions

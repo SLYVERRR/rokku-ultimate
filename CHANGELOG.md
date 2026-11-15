@@ -12,6 +12,9 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 
 ## [1.10.1]
 
+### Additions
+- Added "Trust all" button for untrusted extensions to trust and register all third-party extensions in a single tap
+
 ### Changes
 - Rebranded application name to **Rokku Ultimate** across all variants (Release, Nightly, and Debug)
 - In-App Update Redirection: Configured in-app update checker to fetch signed releases from `SLYVERRR/yokai-ultimate`
