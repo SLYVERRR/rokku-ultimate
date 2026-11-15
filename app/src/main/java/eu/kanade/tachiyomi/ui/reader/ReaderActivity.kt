@@ -48,6 +48,10 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.Insets
 import androidx.core.net.toFile
 import androidx.core.net.toUri
+import eu.kanade.domain.sync.SyncPreferences
+import eu.kanade.tachiyomi.data.sync.SyncDataJob
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import androidx.core.text.buildSpannedString
 import androidx.core.text.inSpans
 import androidx.core.transition.addListener
@@ -1602,6 +1606,10 @@ class ReaderActivity : BaseActivity<ReaderActivityBinding>() {
 
     override fun onPause() {
         viewModel.flushReadTimer()
+        val syncPreferences = Injekt.get<SyncPreferences>()
+        if (syncPreferences.isSyncEnabled()) {
+            SyncDataJob.startNow(this, manual = false)
+        }
         super.onPause()
     }
 

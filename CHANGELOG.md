@@ -10,6 +10,13 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 
 ## [Unreleased]
 
+### Additions
+- Added 30 seconds (real-time) sync frequency option in Sync settings
+- Trigger instant background sync upon exiting reader or resuming app
+
+### Changes
+- Silent sync success notifications: Removed the "Sync complete" notification popup to avoid spam during frequent syncs, while keeping error notifications active if a sync fails
+
 ## [1.10.1]
 
 ### Additions

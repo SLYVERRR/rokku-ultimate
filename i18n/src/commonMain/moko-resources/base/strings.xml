@@ -1286,6 +1286,7 @@
     <string name="pref_sync_service_webdav">WebDAV</string>
     <string name="pref_sync_interval">Sync frequency</string>
     <string name="pref_sync_interval_manual">Manual only</string>
+    <string name="pref_sync_interval_30s">Every 30 seconds (Real-time)</string>
     <string name="pref_sync_interval_30m">Every 30 minutes</string>
     <string name="pref_sync_interval_1h">Every hour</string>
     <string name="pref_sync_interval_2h">Every 2 hours</string>

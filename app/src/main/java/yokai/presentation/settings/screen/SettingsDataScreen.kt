@@ -274,6 +274,7 @@ object SettingsDataScreen : ComposableSettings() {
 
         val syncIntervalEntries = persistentMapOf(
             0 to stringResource(MR.strings.pref_sync_interval_manual),
+            -1 to stringResource(MR.strings.pref_sync_interval_30s),
             30 to stringResource(MR.strings.pref_sync_interval_30m),
             60 to stringResource(MR.strings.pref_sync_interval_1h),
             120 to stringResource(MR.strings.pref_sync_interval_2h),

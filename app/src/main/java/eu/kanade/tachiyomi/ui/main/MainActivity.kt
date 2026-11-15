@@ -71,6 +71,10 @@ import com.google.android.material.transition.platform.MaterialContainerTransfor
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.backup.restore.BackupRestoreJob
+import eu.kanade.domain.sync.SyncPreferences
+import eu.kanade.tachiyomi.data.sync.SyncDataJob
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
@@ -999,6 +1003,12 @@ open class MainActivity : BaseActivity<MainActivityBinding>() {
     override fun onResume() {
         super.onResume()
         checkForAppUpdates()
+        lifecycleScope.launchIO {
+            val syncPreferences = Injekt.get<SyncPreferences>()
+            if (syncPreferences.isSyncEnabled()) {
+                SyncDataJob.startNow(this@MainActivity, manual = false)
+            }
+        }
         lifecycleScope.launchIO {
             extensionManager.getExtensionUpdates(false)
         }

@@ -29,16 +29,23 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
     private val notifier = SyncNotifier(context)
 
     override suspend fun doWork(): Result {
+        val syncPreferences = Injekt.get<SyncPreferences>()
         if (tags.contains(TAG_AUTO)) {
             if (!context.isOnline()) {
+                if (syncPreferences.syncInterval().get() == -1 && syncPreferences.isSyncEnabled()) {
+                    scheduleNext30sCheck(context)
+                }
                 return Result.retry()
             }
             if (context.workManager.jobIsRunning(TAG_MANUAL)) {
+                if (syncPreferences.syncInterval().get() == -1 && syncPreferences.isSyncEnabled()) {
+                    scheduleNext30sCheck(context)
+                }
                 return Result.retry()
             }
+        } else {
+            tryToSetForeground()
         }
-
-        tryToSetForeground()
 
         return withIOContext {
             try {
@@ -48,6 +55,10 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
                 Logger.e(e) { "SyncDataJob failed" }
                 notifier.showSyncError(e.message)
                 Result.success()
+            } finally {
+                if (syncPreferences.syncInterval().get() == -1 && syncPreferences.isSyncEnabled()) {
+                    scheduleNext30sCheck(context)
+                }
             }
         }
     }
@@ -68,6 +79,7 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
         private const val TAG_JOB = "SyncDataJob"
         private const val TAG_AUTO = "SyncDataJob:auto"
         private const val TAG_MANUAL = "SyncDataJob:manual"
+        private const val TAG_30S_LOOP = "SyncDataJob:30s"
 
         fun isRunning(context: Context): Boolean {
             return context.workManager.jobIsRunning(TAG_JOB)
@@ -78,6 +90,7 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
             val interval = prefInterval ?: syncPreferences.syncInterval().get()
 
             if (interval > 0 && syncPreferences.isSyncEnabled()) {
+                context.workManager.cancelUniqueWork(TAG_30S_LOOP)
                 val request = PeriodicWorkRequestBuilder<SyncDataJob>(
                     interval.toLong(),
                     TimeUnit.MINUTES,
@@ -93,12 +106,38 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
                     ExistingPeriodicWorkPolicy.UPDATE,
                     request,
                 )
+            } else if (interval == -1 && syncPreferences.isSyncEnabled()) {
+                context.workManager.cancelUniqueWork(TAG_AUTO)
+                scheduleNext30sCheck(context)
             } else {
                 context.workManager.cancelUniqueWork(TAG_AUTO)
+                context.workManager.cancelUniqueWork(TAG_30S_LOOP)
             }
         }
 
+        fun scheduleNext30sCheck(context: Context) {
+            val syncPreferences = Injekt.get<SyncPreferences>()
+            if (syncPreferences.syncInterval().get() != -1 || !syncPreferences.isSyncEnabled()) {
+                return
+            }
+            val request = OneTimeWorkRequestBuilder<SyncDataJob>()
+                .addTag(TAG_JOB)
+                .addTag(TAG_AUTO)
+                .addTag(TAG_30S_LOOP)
+                .setInitialDelay(30, TimeUnit.SECONDS)
+                .build()
+            context.workManager.enqueueUniqueWork(
+                TAG_30S_LOOP,
+                ExistingWorkPolicy.REPLACE,
+                request,
+            )
+        }
+
         fun startNow(context: Context, manual: Boolean = true) {
+            val syncPreferences = Injekt.get<SyncPreferences>()
+            if (!syncPreferences.isSyncEnabled()) {
+                return
+            }
             val wm = context.workManager
             if (wm.jobIsRunning(TAG_JOB)) {
                 return
@@ -117,6 +156,7 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
             wm.cancelUniqueWork(TAG_JOB)
             wm.cancelUniqueWork(TAG_AUTO)
             wm.cancelUniqueWork(TAG_MANUAL)
+            wm.cancelUniqueWork(TAG_30S_LOOP)
         }
     }
 }

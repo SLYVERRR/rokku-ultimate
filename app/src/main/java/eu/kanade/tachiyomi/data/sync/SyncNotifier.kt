@@ -75,10 +75,5 @@ class SyncNotifier(private val context: Context) {
 
     fun showSyncSuccess(message: String?) {
         context.notificationManager.cancel(Notifications.ID_SYNC_PROGRESS)
-        completeNotificationBuilder.apply {
-            setContentTitle(context.getString(MR.strings.sync_complete))
-            setContentText(message ?: context.getString(MR.strings.sync_complete))
-            show(Notifications.ID_SYNC_COMPLETE)
-        }
     }
 }
