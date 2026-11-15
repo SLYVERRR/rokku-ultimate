@@ -61,6 +61,16 @@ fun appModule(app: Application) = module {
                     setPragma(db, "foreign_keys = ON")
                     setPragma(db, "journal_mode = WAL")
                     setPragma(db, "synchronous = NORMAL")
+                    setPragma(db, "temp_store = MEMORY")
+                    setPragma(db, "cache_size = -64000")
+
+                    // High-performance query and sync indexes
+                    db.execSQL("CREATE INDEX IF NOT EXISTS mangas_source_url_index ON mangas(source, url)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS mangas_title_index ON mangas(title)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS mangas_source_index ON mangas(source)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS chapters_manga_id_url_index ON chapters(manga_id, url)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS chapters_url_index ON chapters(url)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS history_last_read_index ON history(history_last_read)")
                 }
 
                 private fun setPragma(db: SupportSQLiteDatabase, pragma: String) {

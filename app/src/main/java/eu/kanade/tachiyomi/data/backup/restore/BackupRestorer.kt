@@ -26,6 +26,7 @@ class BackupRestorer(
     val notifier: BackupNotifier? = null,
     private val onProgress: ((Int, Int, String) -> Unit)? = null,
     private val handler: DatabaseHandler = Injekt.get(),
+    private val getManga: yokai.domain.manga.interactor.GetManga = Injekt.get(),
     private val categoriesBackupRestorer: CategoriesBackupRestorer = CategoriesBackupRestorer(),
     private val mangaBackupRestorer: MangaBackupRestorer = MangaBackupRestorer(),
     private val preferenceBackupRestorer: PreferenceBackupRestorer = PreferenceBackupRestorer(context),
@@ -103,6 +104,7 @@ class BackupRestorer(
 
             // Restore individual manga
             if (options.libraryEntries) {
+                val existingMangaMap = getManga.awaitAll().associateBy { "${it.source}|${it.url}" }
                 backup.backupManga.chunked(RESTORE_CHUNK_SIZE).forEach { chunk ->
                     var lastTitle = ""
                     handler.await(inTransaction = true) {
@@ -111,6 +113,7 @@ class BackupRestorer(
                             mangaBackupRestorer.restoreManga(
                                 it,
                                 backup.backupCategories,
+                                existingMangaMap = existingMangaMap,
                                 onComplete = { manga ->
                                     restoreProgress += 1
                                     lastTitle = manga.title

@@ -130,6 +130,16 @@ class ManageCategoryDialog(bundle: Bundle? = null) :
             preferences.libraryUpdateInterval().set(0)
             LibraryUpdateJob.setupTask(preferences.context, 0)
         }
+        val targetCatId = category.id ?: this.category?.id
+        if (targetCatId != null && targetCatId > 0) {
+            val vault = preferences.hiddenCategoriesVault().get().toMutableSet()
+            if (binding.hideInVault.isChecked) {
+                vault.add(targetCatId.toString())
+            } else {
+                vault.remove(targetCatId.toString())
+            }
+            preferences.hiddenCategoriesVault().set(vault)
+        }
         updateLibrary?.invoke(category.id)
         return true
     }
@@ -180,6 +190,10 @@ class ManageCategoryDialog(bundle: Bundle? = null) :
             preferences.libraryUpdateCategoriesExclude(),
             preferences.libraryUpdateInterval().get() > 0,
         )
+        binding.hideInVault.isVisible = category != null
+        category?.id?.let { catId ->
+            binding.hideInVault.isChecked = catId.toString() in preferences.hiddenCategoriesVault().get()
+        }
     }
 
     /** Update a pref based on checkbox, and return if the pref is not empty */

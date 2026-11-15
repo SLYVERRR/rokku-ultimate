@@ -19,6 +19,9 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 - One-tap "Sync Now" button with live notification progress and relative timestamp indicator
 - Granular sync preferences allowing individual toggles for library entries, categories, chapters, tracking, history, and settings
 - Direct integrated database restoration from in-memory sync snapshots
+- Performance Boost: Transactional SQLite batch restoration, pre-cached existence maps, and $O(1)$ HashMap lookups for chapters, categories, and tracking (ported from Komikku)
+- Database Optimizations: SQLite PRAGMAs (`temp_store = MEMORY`, `cache_size = -64000`) and dedicated B-tree database indexing on manga, chapter, and history tables for instant search and browsing speeds
+- Category Vault: Hide private or sensitive categories behind a Category Vault toggle in category settings, with one-tap lock/unlock directly from the library filter sheet
 
 ## [1.9.0]
 

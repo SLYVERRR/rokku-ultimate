@@ -1307,4 +1307,9 @@
     <string name="pref_sync_app_settings">Sync app preferences</string>
     <string name="pref_sync_source_settings">Sync source settings</string>
     <string name="pref_sync_extension_repos">Sync extension repositories</string>
+    <!-- Category Vault -->
+    <string name="hide_category_vault">Hide category in vault</string>
+    <string name="category_vault">Category vault</string>
+    <string name="vault_locked">Category vault locked</string>
+    <string name="vault_unlocked">Category vault unlocked</string>
 </resources>

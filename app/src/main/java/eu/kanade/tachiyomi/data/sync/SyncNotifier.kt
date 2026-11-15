@@ -1,25 +1,27 @@
 package eu.kanade.tachiyomi.data.sync
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import androidx.core.app.NotificationCompat
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.core.security.SecurityPreferences
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
-import eu.kanade.tachiyomi.util.system.cancelNotification
+import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.util.system.notificationBuilder
-import eu.kanade.tachiyomi.util.system.notify
+import eu.kanade.tachiyomi.util.system.notificationManager
 import uy.kohesive.injekt.injectLazy
 import yokai.i18n.MR
 import yokai.util.lang.getString
+import android.R as AR
 
 class SyncNotifier(private val context: Context) {
 
-    private val preferences: SecurityPreferences by injectLazy()
+    private val preferences: PreferencesHelper by injectLazy()
 
     private val progressNotificationBuilder = context.notificationBuilder(
         Notifications.CHANNEL_SYNC_PROGRESS,
     ) {
+        setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
         setSmallIcon(R.drawable.ic_sync_24dp)
         setAutoCancel(false)
         setOngoing(true)
@@ -29,8 +31,13 @@ class SyncNotifier(private val context: Context) {
     private val completeNotificationBuilder = context.notificationBuilder(
         Notifications.CHANNEL_SYNC_COMPLETE,
     ) {
+        setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
         setSmallIcon(R.drawable.ic_sync_24dp)
         setAutoCancel(true)
+    }
+
+    private fun NotificationCompat.Builder.show(id: Int) {
+        context.notificationManager.notify(id, build())
     }
 
     fun showSyncProgress(
@@ -51,27 +58,27 @@ class SyncNotifier(private val context: Context) {
             clearActions()
             addAction(
                 R.drawable.ic_close_24dp,
-                context.getString(MR.strings.action_cancel),
+                context.getString(AR.string.cancel),
                 NotificationReceiver.cancelSyncPendingBroadcast(context, Notifications.ID_SYNC_PROGRESS),
             )
         }
     }
 
     fun showSyncError(error: String?) {
-        context.cancelNotification(Notifications.ID_SYNC_PROGRESS)
+        context.notificationManager.cancel(Notifications.ID_SYNC_PROGRESS)
         completeNotificationBuilder.apply {
             setContentTitle(context.getString(MR.strings.sync_error))
             setContentText(error ?: "Unknown error")
-            context.notify(Notifications.ID_SYNC_COMPLETE, build())
+            show(Notifications.ID_SYNC_COMPLETE)
         }
     }
 
     fun showSyncSuccess(message: String?) {
-        context.cancelNotification(Notifications.ID_SYNC_PROGRESS)
+        context.notificationManager.cancel(Notifications.ID_SYNC_PROGRESS)
         completeNotificationBuilder.apply {
             setContentTitle(context.getString(MR.strings.sync_complete))
             setContentText(message ?: context.getString(MR.strings.sync_complete))
-            context.notify(Notifications.ID_SYNC_COMPLETE, build())
+            show(Notifications.ID_SYNC_COMPLETE)
         }
     }
 }

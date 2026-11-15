@@ -29,6 +29,7 @@ import eu.kanade.tachiyomi.util.system.launchUI
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.system.withIOContext
 import eu.kanade.tachiyomi.util.system.withUIContext
+import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.view.activityBinding
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.hide
@@ -37,6 +38,7 @@ import eu.kanade.tachiyomi.util.view.isCollapsed
 import eu.kanade.tachiyomi.util.view.isExpanded
 import eu.kanade.tachiyomi.util.view.isHidden
 import eu.kanade.tachiyomi.util.view.setText
+import yokai.i18n.MR
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.drop
@@ -159,6 +161,12 @@ class FilterBottomSheet @JvmOverloads constructor(context: Context, attrs: Attri
         binding.viewOptions.setOnClickListener {
             onGroupClicked(ACTION_DISPLAY)
         }
+        binding.vaultButton.setOnClickListener {
+            val show = !preferences.showHiddenCategories().get()
+            preferences.showHiddenCategories().set(show)
+            val msg = if (show) MR.strings.vault_unlocked else MR.strings.vault_locked
+            context.toast(msg)
+        }
 
         sheetBehavior?.isGestureInsetBottomIgnored = true
 
@@ -191,10 +199,10 @@ class FilterBottomSheet @JvmOverloads constructor(context: Context, attrs: Attri
             if (binding.secondLayout.width + (binding.groupBy.width * 2) + 20.dpToPx < width) {
                 binding.secondLayout.removeView(binding.viewOptions)
                 binding.firstLayout.addView(binding.viewOptions)
-                binding.secondLayout.isVisible = false
+                binding.secondLayout.isVisible = binding.secondLayout.childCount > 0
             } else if (binding.viewOptions.parent == binding.firstLayout) {
                 binding.firstLayout.removeView(binding.viewOptions)
-                binding.secondLayout.addView(binding.viewOptions)
+                binding.secondLayout.addView(binding.viewOptions, 0)
                 binding.secondLayout.isVisible = true
             }
         }

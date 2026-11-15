@@ -335,6 +335,10 @@ class PreferencesHelper(val context: Context, val preferenceStore: PreferenceSto
 
     fun collapsedDynamicAtBottom() = preferenceStore.getBoolean("collapsed_dynamic_at_bottom", false)
 
+    fun hiddenCategoriesVault() = preferenceStore.getStringSet("hidden_categories_vault", mutableSetOf())
+
+    fun showHiddenCategories() = preferenceStore.getBoolean("show_hidden_categories", false)
+
     // TODO: SourcePref
     fun hiddenSources() = preferenceStore.getStringSet("hidden_catalogues", mutableSetOf())
 

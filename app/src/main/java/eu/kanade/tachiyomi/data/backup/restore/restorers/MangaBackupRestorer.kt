@@ -63,6 +63,7 @@ class MangaBackupRestorer(
     suspend fun restoreManga(
         backupManga: BackupManga,
         backupCategories: List<BackupCategory>,
+        existingMangaMap: Map<String, Manga>? = null,
         onComplete: (Manga) -> Unit,
         onError: (Manga, Throwable) -> Unit,
     ) {
@@ -77,7 +78,8 @@ class MangaBackupRestorer(
         val backupNextUpdate = backupManga.nextUpdate
 
         try {
-            val dbManga = getManga.awaitByUrlAndSource(manga.url, manga.source)
+            val key = "${manga.source}|${manga.url}"
+            val dbManga = existingMangaMap?.get(key) ?: getManga.awaitByUrlAndSource(manga.url, manga.source)
             if (dbManga == null) {
                 // Manga not in database
                 restoreNewManga(
@@ -176,17 +178,15 @@ class MangaBackupRestorer(
      */
     private suspend fun restoreChapters(manga: Manga, chapters: List<Chapter>): List<Chapter> {
         val dbChapters = getChapter.awaitAll(manga)
+        val dbChapterMap = dbChapters.associateBy { it.url }
 
-        // Backups can contain the same chapter url more than once (e.g. re-exported after a
-        // partial restore). Without deduping, every duplicate that doesn't match an existing
-        // db chapter gets inserted as its own row, so the manga ends up with duplicate chapters.
         val distinctChapters = chapters
             .asReversed()
             .distinctBy { it.url }
             .asReversed()
 
         distinctChapters.forEach { chapter ->
-            val dbChapter = dbChapters.find { it.url == chapter.url }
+            val dbChapter = dbChapterMap[chapter.url]
             if (dbChapter != null) {
                 chapter.id = dbChapter.id
                 chapter.copyFrom(dbChapter as SChapter)
@@ -243,14 +243,13 @@ class MangaBackupRestorer(
      */
     private suspend fun restoreCategories(manga: Manga, categories: List<Int>, backupCategories: List<BackupCategory>) {
         val dbCategories = getDbCategories()
+        val backupCatMap = backupCategories.associateBy { it.order }
+        val dbCatMap = dbCategories.associateBy { it.name }
+
         val mangaCategoriesToUpdate = ArrayList<MangaCategory>(categories.size)
         categories.forEach { backupCategoryOrder ->
-            backupCategories.firstOrNull {
-                it.order == backupCategoryOrder
-            }?.let { backupCategory ->
-                dbCategories.firstOrNull { dbCategory ->
-                    dbCategory.name == backupCategory.name
-                }?.let { dbCategory ->
+            backupCatMap[backupCategoryOrder]?.let { backupCategory ->
+                dbCatMap[backupCategory.name]?.let { dbCategory ->
                     mangaCategoriesToUpdate += MangaCategory.create(manga, dbCategory)
                 }
             }
@@ -302,37 +301,28 @@ class MangaBackupRestorer(
      * @param tracks the track list to restore.
      */
     private suspend fun restoreTrackForManga(manga: Manga, tracks: List<Track>) {
-        // Fix foreign keys with the current manga id
         tracks.map { it.manga_id = manga.id!! }
 
-        // Get tracks from database
         val dbTracks = getTrack.awaitAllByMangaId(manga.id!!)
+        val dbTrackMap = dbTracks.associateBy { it.sync_id }
         val trackToUpdate = mutableListOf<Track>()
 
         tracks.forEach { track ->
-            var isInDatabase = false
-            for (dbTrack in dbTracks) {
-                if (track.sync_id == dbTrack.sync_id) {
-                    // The sync is already in the db, only update its fields
-                    if (track.media_id != dbTrack.media_id) {
-                        dbTrack.media_id = track.media_id
-                    }
-                    if (track.library_id != dbTrack.library_id) {
-                        dbTrack.library_id = track.library_id
-                    }
-                    dbTrack.last_chapter_read = max(dbTrack.last_chapter_read, track.last_chapter_read)
-                    isInDatabase = true
-                    trackToUpdate.add(dbTrack)
-                    break
+            val dbTrack = dbTrackMap[track.sync_id]
+            if (dbTrack != null) {
+                if (track.media_id != dbTrack.media_id) {
+                    dbTrack.media_id = track.media_id
                 }
-            }
-            if (!isInDatabase) {
-                // Insert new sync. Let the db assign the id
+                if (track.library_id != dbTrack.library_id) {
+                    dbTrack.library_id = track.library_id
+                }
+                dbTrack.last_chapter_read = max(dbTrack.last_chapter_read, track.last_chapter_read)
+                trackToUpdate.add(dbTrack)
+            } else {
                 track.id = null
                 trackToUpdate.add(track)
             }
         }
-        // Update database
         if (trackToUpdate.isNotEmpty()) {
             insertTrack.awaitBulk(trackToUpdate)
         }

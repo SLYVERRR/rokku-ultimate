@@ -839,6 +839,9 @@ class LibraryPresenter(
 
         preferences.collapsedCategories().changes(),
         preferences.collapsedDynamicCategories().changes(),
+
+        preferences.hiddenCategoriesVault().changes(),
+        preferences.showHiddenCategories().changes(),
     ) {
         ItemPreferences(
             filterDownloaded = it[0] as Int,
@@ -854,6 +857,8 @@ class LibraryPresenter(
             sortAscending = it[10] as Boolean,
             collapsedCategories = it[11] as Set<String>,
             collapsedDynamicCategories = it[12] as Set<String>,
+            hiddenCategoriesVault = it[13] as Set<String>,
+            showHiddenCategories = it[14] as Boolean,
         )
     }
 
@@ -874,11 +879,23 @@ class LibraryPresenter(
 
             val defaultCategory = createDefaultCategory()
 
+            val visibleDbCategories = if (prefs.showHiddenCategories) {
+                dbCategories
+            } else {
+                dbCategories.filter { it.id.toString() !in prefs.hiddenCategoriesVault }
+            }
+
+            val visibleMangaList = if (prefs.showHiddenCategories) {
+                libraryMangaList
+            } else {
+                libraryMangaList.filter { it.category.toString() !in prefs.hiddenCategoriesVault }
+            }
+
             // FIXME: Should return Map<Int, LibraryItem> where Int is category id
             if (groupType <= BY_DEFAULT || !libraryIsGrouped) {
                 getLibraryItems(
-                    dbCategories,
-                    libraryMangaList,
+                    visibleDbCategories,
+                    visibleMangaList,
                     prefs.sortingMode,
                     prefs.sortAscending,
                     prefs.showAllCategories,
@@ -887,13 +904,13 @@ class LibraryPresenter(
                 )
             } else {
                 getDynamicLibraryItems(
-                    libraryMangaList,
+                    visibleMangaList,
                     prefs.sortingMode,
                     prefs.sortAscending,
                     groupType,
                     prefs.collapsedDynamicCategories,
                 )
-            } to listOf(defaultCategory) + dbCategories
+            } to listOf(defaultCategory) + visibleDbCategories
         }
 
         return combine(
@@ -1731,6 +1748,9 @@ class LibraryPresenter(
 
         val collapsedCategories: Set<String>,
         val collapsedDynamicCategories: Set<String>,
+
+        val hiddenCategoriesVault: Set<String>,
+        val showHiddenCategories: Boolean,
     )
 
     data class LibraryData(
