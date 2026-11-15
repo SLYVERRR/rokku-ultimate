@@ -23,7 +23,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.util.concurrent.TimeUnit
 
 class WebDavSyncService(
     context: Context,
