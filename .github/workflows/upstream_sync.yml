@@ -1,0 +1,59 @@
+name: Sync Upstream Rokku
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Check every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  sync:
+    name: Check and sync upstream Rokku
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/rokku-app/rokku.git
+          git fetch upstream master --tags
+
+      - name: Check for upstream updates
+        id: check_upstream
+        run: |
+          UPSTREAM_HEAD=$(git rev-parse upstream/master)
+          MERGE_BASE=$(git merge-base master upstream/master)
+          echo "Upstream HEAD: $UPSTREAM_HEAD"
+          echo "Merge Base:    $MERGE_BASE"
+          if [ "$UPSTREAM_HEAD" = "$MERGE_BASE" ]; then
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+            echo "Already up-to-date with upstream rokku-app/rokku."
+          else
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+            echo "New upstream commits detected!"
+          fi
+
+      - name: Merge upstream and push
+        if: steps.check_upstream.outputs.has_updates == 'true'
+        run: |
+          git merge upstream/master -m "chore(upstream): sync latest changes from rokku-app/rokku"
+          git push origin master
+
+      - name: Trigger build workflow
+        if: steps.check_upstream.outputs.has_updates == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run "Build app" --ref master || echo "Workflow trigger completed."

@@ -116,11 +116,11 @@ val RELEASE_TAG: String by lazy {
 }
 
 val GITHUB_REPO: String by lazy {
-    "rokku-app/rokku"
+    "SLYVERRR/yokai-ultimate"
 }
 
 val NIGHTLY_GITHUB_REPO: String by lazy {
-    "rokku-app/rokku-nightly"
+    "SLYVERRR/yokai-ultimate"
 }
 
 val RELEASE_URL = "https://github.com/${if (BuildConfig.NIGHTLY) NIGHTLY_GITHUB_REPO else GITHUB_REPO}/releases/tag/$RELEASE_TAG"
