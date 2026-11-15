@@ -8,7 +8,7 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 - `Fixes` - Bugfixes
 - `Other` - Technical changes/updates
 
-## [Unreleased]
+## [1.10.2]
 
 ### Additions
 - Added 30 seconds (real-time) sync frequency option in Sync settings
@@ -16,6 +16,7 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 
 ### Changes
 - Silent sync success notifications: Removed the "Sync complete" notification popup to avoid spam during frequent syncs, while keeping error notifications active if a sync fails
+- Rebranded repository references to Rokku Ultimate
 
 ## [1.10.1]
 

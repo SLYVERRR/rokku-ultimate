@@ -1,6 +1,7 @@
 package yokai.core.di
 
 import android.app.Application
+import eu.kanade.domain.sync.SyncPreferences
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.core.preference.AndroidPreferenceStore
 import eu.kanade.tachiyomi.core.preference.PreferenceStore
@@ -10,7 +11,6 @@ import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.data.track.TrackPreferences
 import eu.kanade.tachiyomi.network.NetworkPreferences
 import org.koin.dsl.module
-import eu.kanade.domain.sync.SyncPreferences
 import yokai.domain.backup.BackupPreferences
 import yokai.domain.base.BasePreferences
 import yokai.domain.download.DownloadPreferences

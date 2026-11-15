@@ -30,7 +30,8 @@ class SyncManager(
     enum class SyncServiceType(val value: Int) {
         NONE(0),
         SYNCYOMI(1),
-        WEBDAV(2);
+        WEBDAV(2),
+        ;
 
         companion object {
             fun fromInt(value: Int) = entries.firstOrNull { it.value == value } ?: NONE

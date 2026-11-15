@@ -288,11 +288,14 @@ abstract class SyncService(
 
             when {
                 local != null && remote == null -> local
+
                 local == null && remote != null -> remote
+
                 local != null && remote != null -> {
                     val mergedIndividual = mergePreferencesLists(local.prefs, remote.prefs)
                     BackupSourcePreferences(key, mergedIndividual)
                 }
+
                 else -> null
             }
         }
