@@ -24,7 +24,7 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 
 ### Changes
 - Rebranded application name to **Rokku Ultimate** across all variants (Release, Nightly, and Debug)
-- In-App Update Redirection: Configured in-app update checker to fetch signed releases from `SLYVERRR/yokai-ultimate`
+- In-App Update Redirection: Configured in-app update checker to fetch signed releases from `SLYVERRR/rokku-ultimate`
 - Upstream Synchronization: Added automated GitHub Actions workflow to check and merge latest upstream `rokku-app/rokku` commits every 6 hours
 
 ## [1.10.0]

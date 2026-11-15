@@ -220,7 +220,7 @@ class AboutScreen : Screen() {
                             LinkIcon(
                                 label = "GitHub",
                                 icon = CustomIcons.GitHub,
-                                url = "https://github.com/SLYVERRR/yokai-ultimate",
+                                url = "https://github.com/SLYVERRR/rokku-ultimate",
                             )
                         }
                     }
@@ -302,4 +302,4 @@ fun getFormattedBuildTime(dateFormat: DateFormat): String {
     }
 }
 
-private const val SOURCE_URL = "https://github.com/SLYVERRR/yokai-ultimate/commits/master"
+private const val SOURCE_URL = "https://github.com/SLYVERRR/rokku-ultimate/commits/master"
