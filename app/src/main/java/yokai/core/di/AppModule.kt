@@ -160,6 +160,9 @@ fun appModule(app: Application) = module {
     single { StorageManager(app, get()) }
 
     single { SplashState() }
+
+    single { eu.kanade.tachiyomi.data.sync.SyncNotifier(app) }
+    single { eu.kanade.tachiyomi.data.sync.SyncManager(app) }
 }
 
 // REF: https://github.com/jobobby04/TachiyomiSY/blob/26cfb4811fef4059fb7e8e03361c141932fec6b5/app/src/main/java/eu/kanade/tachiyomi/di/AppModule.kt#L177C1-L192C2

@@ -76,16 +76,7 @@ class BackupCreator(
                 throw BackupCreateException(context.getString(MR.strings.backup_location_unavailable))
             }
 
-            val readNotFavorites = if (options.readManga) getManga.awaitReadNotFavorites() else emptyList()
-            val backupManga = backupMangas(getManga.awaitFavorites() + readNotFavorites, options)
-            val backup = Backup(
-                backupManga = backupManga,
-                backupCategories = backupCategories(options),
-                backupSources = backupSources(backupManga),
-                backupPreferences = backupAppPreferences(options),
-                backupSourcePreferences = backupSourcePreferences(options),
-                backupExtensionRepo = backupExtensionRepos(options),
-            )
+            val backup = createBackupData(options)
 
             val byteArray = parser.encodeToByteArray(Backup.serializer(), backup)
             if (byteArray.isEmpty()) {
@@ -115,6 +106,19 @@ class BackupCreator(
             file?.delete()
             throw e
         }
+    }
+
+    suspend fun createBackupData(options: BackupOptions): Backup {
+        val readNotFavorites = if (options.readManga) getManga.awaitReadNotFavorites() else emptyList()
+        val backupManga = backupMangas(getManga.awaitFavorites() + readNotFavorites, options)
+        return Backup(
+            backupManga = backupManga,
+            backupCategories = backupCategories(options),
+            backupSources = backupSources(backupManga),
+            backupPreferences = backupAppPreferences(options),
+            backupSourcePreferences = backupSourcePreferences(options),
+            backupExtensionRepo = backupExtensionRepos(options),
+        )
     }
 
     private suspend fun backupCategories(options: BackupOptions): List<BackupCategory> {

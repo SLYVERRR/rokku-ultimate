@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.data.backup.restore
 import android.content.Context
 import android.net.Uri
 import eu.kanade.tachiyomi.data.backup.BackupNotifier
+import eu.kanade.tachiyomi.data.backup.models.Backup
 import eu.kanade.tachiyomi.data.backup.restore.restorers.CategoriesBackupRestorer
 import eu.kanade.tachiyomi.data.backup.restore.restorers.ExtensionReposBackupRestorer
 import eu.kanade.tachiyomi.data.backup.restore.restorers.MangaBackupRestorer
@@ -22,7 +23,8 @@ import java.util.*
 
 class BackupRestorer(
     val context: Context,
-    val notifier: BackupNotifier,
+    val notifier: BackupNotifier? = null,
+    private val onProgress: ((Int, Int, String) -> Unit)? = null,
     private val handler: DatabaseHandler = Injekt.get(),
     private val categoriesBackupRestorer: CategoriesBackupRestorer = CategoriesBackupRestorer(),
     private val mangaBackupRestorer: MangaBackupRestorer = MangaBackupRestorer(),
@@ -43,23 +45,26 @@ class BackupRestorer(
     private val errors = mutableListOf<Pair<Date, String>>()
 
     suspend fun restore(uri: Uri, options: RestoreOptions = RestoreOptions()) {
+        val backup = BackupUtil.decodeBackup(context, uri)
+        restore(backup, options)
+    }
+
+    suspend fun restore(backup: Backup, options: RestoreOptions = RestoreOptions()) {
         val startTime = System.currentTimeMillis()
         restoreProgress = 0
         errors.clear()
 
-        performRestore(uri, options)
+        performRestore(backup, options)
 
         val endTime = System.currentTimeMillis()
         val time = endTime - startTime
 
         val logFile = writeErrorLog()
 
-        notifier.showRestoreComplete(time, errors.size, logFile.parent, logFile.name)
+        notifier?.showRestoreComplete(time, errors.size, logFile.parent, logFile.name)
     }
 
-    private suspend fun performRestore(uri: Uri, options: RestoreOptions) {
-        val backup = BackupUtil.decodeBackup(context, uri)
-
+    private suspend fun performRestore(backup: Backup, options: RestoreOptions) {
         restoreAmount = (if (options.libraryEntries) backup.backupManga.size else 0) +
             listOf(options.categories, options.appPrefs, options.sourcePrefs, options.extensionRepos).count { it }
 
@@ -139,7 +144,8 @@ class BackupRestorer(
         amount: Int,
         title: String,
     ) {
-        notifier.showRestoreProgress(title, progress, amount)
+        notifier?.showRestoreProgress(title, progress, amount)
+        onProgress?.invoke(progress, amount, title)
     }
 
     internal fun writeErrorLog(): File {

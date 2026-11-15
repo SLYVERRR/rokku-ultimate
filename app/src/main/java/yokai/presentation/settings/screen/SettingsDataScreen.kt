@@ -43,9 +43,12 @@ import eu.kanade.tachiyomi.util.system.launchNonCancellableIO
 import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.system.withUIContext
+import eu.kanade.domain.sync.SyncPreferences
+import eu.kanade.tachiyomi.data.sync.SyncDataJob
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableMap
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.launch
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -88,10 +91,12 @@ object SettingsDataScreen : ComposableSettings() {
     override fun getPreferences(): List<Preference> {
         val storagePreferences: StoragePreferences by injectLazy()
         val backupPreferences: BackupPreferences by injectLazy()
+        val syncPreferences: SyncPreferences by injectLazy()
 
         return persistentListOf(
             getStorageLocationPreference(storagePreferences = storagePreferences),
             getBackupAndRestoreGroup(backupPreferences = backupPreferences),
+            getSyncGroup(syncPreferences = syncPreferences),
             getDataGroup(),
         )
     }
@@ -252,6 +257,178 @@ object SettingsDataScreen : ComposableSettings() {
                         stringResource(MR.strings.last_auto_backup_info, relativeTimeSpanString(lastAutoBackup)),
                 ),
             ),
+        )
+    }
+
+    @Composable
+    private fun getSyncGroup(syncPreferences: SyncPreferences): Preference.PreferenceGroup {
+        val context = LocalContext.current
+        val syncService by syncPreferences.syncService().collectAsState()
+        val lastSync by syncPreferences.lastSyncTimestamp().collectAsState()
+
+        val syncServiceEntries = persistentMapOf(
+            0 to stringResource(MR.strings.pref_sync_service_none),
+            1 to stringResource(MR.strings.pref_sync_service_syncyomi),
+            2 to stringResource(MR.strings.pref_sync_service_webdav),
+        )
+
+        val syncIntervalEntries = persistentMapOf(
+            0 to stringResource(MR.strings.pref_sync_interval_manual),
+            30 to stringResource(MR.strings.pref_sync_interval_30m),
+            60 to stringResource(MR.strings.pref_sync_interval_1h),
+            120 to stringResource(MR.strings.pref_sync_interval_2h),
+            360 to stringResource(MR.strings.pref_sync_interval_6h),
+            720 to stringResource(MR.strings.pref_sync_interval_12h),
+            1440 to stringResource(MR.strings.pref_sync_interval_24h),
+        )
+
+        val items = mutableListOf<Preference.PreferenceItem<out Any>>()
+
+        items.add(
+            Preference.PreferenceItem.ListPreference(
+                pref = syncPreferences.syncService(),
+                title = stringResource(MR.strings.pref_sync_service),
+                entries = syncServiceEntries,
+                onValueChanged = {
+                    SyncDataJob.setupTask(context)
+                    true
+                },
+            ),
+        )
+
+        if (syncService != 0) {
+            val lastSyncStr = if (lastSync == 0L) {
+                stringResource(MR.strings.never)
+            } else {
+                relativeTimeSpanString(lastSync)
+            }
+
+            items.add(
+                Preference.PreferenceItem.TextPreference(
+                    title = stringResource(MR.strings.sync_now),
+                    subtitle = stringResource(MR.strings.pref_last_sync) + ": " + lastSyncStr,
+                    onClick = {
+                        if (SyncDataJob.isRunning(context)) {
+                            context.toast(MR.strings.sync_in_progress)
+                        } else {
+                            SyncDataJob.startNow(context, manual = true)
+                            context.toast(MR.strings.syncing_library)
+                        }
+                    },
+                ),
+            )
+
+            items.add(
+                Preference.PreferenceItem.ListPreference(
+                    pref = syncPreferences.syncInterval(),
+                    title = stringResource(MR.strings.pref_sync_interval),
+                    entries = syncIntervalEntries,
+                    onValueChanged = { interval ->
+                        SyncDataJob.setupTask(context, interval)
+                        true
+                    },
+                ),
+            )
+
+            if (syncService == 1) {
+                items.add(
+                    Preference.PreferenceItem.EditTextPreference(
+                        pref = syncPreferences.clientHost(),
+                        title = stringResource(MR.strings.pref_syncyomi_host),
+                        subtitle = "%s",
+                    ),
+                )
+                items.add(
+                    Preference.PreferenceItem.EditTextPreference(
+                        pref = syncPreferences.clientAPIKey(),
+                        title = stringResource(MR.strings.pref_syncyomi_api_key),
+                        subtitle = if (syncPreferences.clientAPIKey().get().isEmpty()) "%s" else "••••••••",
+                    ),
+                )
+            } else if (syncService == 2) {
+                items.add(
+                    Preference.PreferenceItem.EditTextPreference(
+                        pref = syncPreferences.webDavUrl(),
+                        title = stringResource(MR.strings.pref_webdav_url),
+                        subtitle = "%s",
+                    ),
+                )
+                items.add(
+                    Preference.PreferenceItem.EditTextPreference(
+                        pref = syncPreferences.webDavUsername(),
+                        title = stringResource(MR.strings.pref_webdav_username),
+                        subtitle = "%s",
+                    ),
+                )
+                items.add(
+                    Preference.PreferenceItem.EditTextPreference(
+                        pref = syncPreferences.webDavPassword(),
+                        title = stringResource(MR.strings.pref_webdav_password),
+                        subtitle = if (syncPreferences.webDavPassword().get().isEmpty()) "%s" else "••••••••",
+                    ),
+                )
+                items.add(
+                    Preference.PreferenceItem.EditTextPreference(
+                        pref = syncPreferences.webDavFolder(),
+                        title = stringResource(MR.strings.pref_webdav_folder),
+                        subtitle = "%s",
+                    ),
+                )
+            }
+
+            items.add(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = syncPreferences.syncLibraryEntries(),
+                    title = stringResource(MR.strings.pref_sync_library_entries),
+                ),
+            )
+            items.add(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = syncPreferences.syncCategories(),
+                    title = stringResource(MR.strings.pref_sync_categories),
+                ),
+            )
+            items.add(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = syncPreferences.syncChapters(),
+                    title = stringResource(MR.strings.pref_sync_chapters),
+                ),
+            )
+            items.add(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = syncPreferences.syncTracking(),
+                    title = stringResource(MR.strings.pref_sync_tracking),
+                ),
+            )
+            items.add(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = syncPreferences.syncHistory(),
+                    title = stringResource(MR.strings.pref_sync_history),
+                ),
+            )
+            items.add(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = syncPreferences.syncAppPrefs(),
+                    title = stringResource(MR.strings.pref_sync_app_settings),
+                ),
+            )
+            items.add(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = syncPreferences.syncSourcePrefs(),
+                    title = stringResource(MR.strings.pref_sync_source_settings),
+                ),
+            )
+            items.add(
+                Preference.PreferenceItem.SwitchPreference(
+                    pref = syncPreferences.syncExtensionRepos(),
+                    title = stringResource(MR.strings.pref_sync_extension_repos),
+                ),
+            )
+        }
+
+        return Preference.PreferenceGroup(
+            title = stringResource(MR.strings.cloud_sync),
+            preferenceItems = items.toPersistentList(),
         )
     }
 

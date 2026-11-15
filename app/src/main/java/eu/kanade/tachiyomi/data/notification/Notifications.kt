@@ -82,6 +82,12 @@ object Notifications {
     const val ID_BACKUP_PROGRESS = -502
     const val ID_BACKUP_COMPLETE = -503
 
+    private const val GROUP_SYNC = "group_sync"
+    const val CHANNEL_SYNC_PROGRESS = "sync_progress_channel"
+    const val ID_SYNC_PROGRESS = -801
+    const val CHANNEL_SYNC_COMPLETE = "sync_complete_channel"
+    const val ID_SYNC_COMPLETE = -802
+
     /**
      * Notification channel used for crash log file sharing.
      */
@@ -121,6 +127,7 @@ object Notifications {
             ),
             NotificationChannelGroup(GROUP_APP_UPDATES, context.getString(MR.strings.app_updates)),
             NotificationChannelGroup(GROUP_LIBRARY, context.getString(MR.strings.library)),
+            NotificationChannelGroup(GROUP_SYNC, context.getString(MR.strings.cloud_sync)),
         ).forEach(context.notificationManager::createNotificationChannelGroup)
 
         val channels = listOf(
@@ -188,6 +195,23 @@ object Notifications {
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 group = GROUP_BACKUP_RESTORE
+                setShowBadge(false)
+                setSound(null, null)
+            },
+            NotificationChannel(
+                CHANNEL_SYNC_PROGRESS,
+                context.getString(MR.strings.progress),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                group = GROUP_SYNC
+                setShowBadge(false)
+            },
+            NotificationChannel(
+                CHANNEL_SYNC_COMPLETE,
+                context.getString(MR.strings.complete),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                group = GROUP_SYNC
                 setShowBadge(false)
                 setSound(null, null)
             },

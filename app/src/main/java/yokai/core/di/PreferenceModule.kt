@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.data.track.TrackPreferences
 import eu.kanade.tachiyomi.network.NetworkPreferences
 import org.koin.dsl.module
+import eu.kanade.domain.sync.SyncPreferences
 import yokai.domain.backup.BackupPreferences
 import yokai.domain.base.BasePreferences
 import yokai.domain.download.DownloadPreferences
@@ -47,6 +48,8 @@ fun preferenceModule(application: Application) = module {
     single { SecurityPreferences(get()) }
 
     single { BackupPreferences(get()) }
+
+    single { SyncPreferences(get()) }
 
     single { LibraryPreferences(get()) }
 

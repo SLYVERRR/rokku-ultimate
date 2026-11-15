@@ -83,6 +83,8 @@ class NotificationReceiver : BroadcastReceiver() {
 
             ACTION_CANCEL_RESTORE -> cancelRestoreUpdate(context)
 
+            ACTION_CANCEL_SYNC -> cancelSync(context)
+
             ACTION_SHARE_BACKUP ->
                 shareBackup(
                     context,
@@ -238,6 +240,10 @@ class NotificationReceiver : BroadcastReceiver() {
         BackupRestoreJob.stop(context)
     }
 
+    private fun cancelSync(context: Context) {
+        eu.kanade.tachiyomi.data.sync.SyncDataJob.stop(context)
+    }
+
     private fun cancelDownloadUpdate(context: Context) {
         AppDownloadInstallJob.stop(context)
         dismissNotification(context, Notifications.ID_UPDATER)
@@ -272,6 +278,8 @@ class NotificationReceiver : BroadcastReceiver() {
         private const val ACTION_MARK_AS_READ = "$ID.$NAME.MARK_AS_READ"
 
         private const val ACTION_CANCEL_RESTORE = "$ID.$NAME.CANCEL_RESTORE"
+
+        private const val ACTION_CANCEL_SYNC = "$ID.$NAME.CANCEL_SYNC"
 
         private const val EXTRA_FILE_LOCATION = "$ID.$NAME.FILE_LOCATION"
 
@@ -732,6 +740,26 @@ class NotificationReceiver : BroadcastReceiver() {
         internal fun cancelRestorePendingBroadcast(context: Context, notificationId: Int): PendingIntent {
             val intent = Intent(context, NotificationReceiver::class.java).setPackage(context.packageName).apply {
                 action = ACTION_CANCEL_RESTORE
+                putExtra(EXTRA_NOTIFICATION_ID, notificationId)
+            }
+            return PendingIntent.getBroadcast(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        }
+
+        /**
+         * Returns [PendingIntent] that cancels a sync job.
+         *
+         * @param context context of application
+         * @param notificationId id of notification
+         * @return [PendingIntent]
+         */
+        internal fun cancelSyncPendingBroadcast(context: Context, notificationId: Int): PendingIntent {
+            val intent = Intent(context, NotificationReceiver::class.java).setPackage(context.packageName).apply {
+                action = ACTION_CANCEL_SYNC
                 putExtra(EXTRA_NOTIFICATION_ID, notificationId)
             }
             return PendingIntent.getBroadcast(

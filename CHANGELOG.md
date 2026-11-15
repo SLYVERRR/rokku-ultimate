@@ -10,6 +10,16 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 
 ## [Unreleased]
 
+## [1.10.0]
+
+### Additions
+- Cross-Device Cloud Sync supporting WebDAV (Nextcloud, ownCloud, Fastmail, etc.) and SyncYomi self-hosted servers
+- Intelligent 2-way cloud merger engine for library entries, categories, chapters read status & bookmarks, reading history, and tracking
+- Automatic background scheduled sync via WorkManager (30m, 1h, 2h, 6h, 12h, daily)
+- One-tap "Sync Now" button with live notification progress and relative timestamp indicator
+- Granular sync preferences allowing individual toggles for library entries, categories, chapters, tracking, history, and settings
+- Direct integrated database restoration from in-memory sync snapshots
+
 ## [1.9.0]
 
 ### Additions
