@@ -8,6 +8,12 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 - `Fixes` - Bugfixes
 - `Other` - Technical changes/updates
 
+## [1.10.3]
+
+### Additions
+- Transparent GZIP compression for WebDAV sync: payload is compressed on-the-fly, dropping backup size by 76% (from ~19 MB down to ~4.5 MB) for sub-second uploads and battery savings
+- Backwards-compatible decompression: automatically detects and decompresses remote gzipped or uncompressed backups
+
 ## [1.10.2]
 
 ### Additions

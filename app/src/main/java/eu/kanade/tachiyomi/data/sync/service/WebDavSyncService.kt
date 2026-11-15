@@ -8,6 +8,10 @@ import eu.kanade.tachiyomi.data.sync.SyncNotifier
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.PUT
 import eu.kanade.tachiyomi.network.await
+import java.io.ByteArrayOutputStream
+import java.util.concurrent.TimeUnit
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
 import okhttp3.ConnectionPool
@@ -127,11 +131,23 @@ class WebDavSyncService(
 
         return when (response.code) {
             304 -> Pair(null, lastETag) // Not modified
+
             404 -> Pair(null, "") // File not yet created
+
             else -> {
                 if (response.isSuccessful) {
                     val newETag = response.headers["ETag"]?.trim('"') ?: ""
-                    val bytes = response.body.byteStream().use { it.readBytes() }
+                    val rawBytes = response.body.byteStream().use { it.readBytes() }
+                    val bytes = if (rawBytes.size >= 2 && rawBytes[0] == 0x1f.toByte() && rawBytes[1] == 0x8b.toByte()) {
+                        try {
+                            GZIPInputStream(rawBytes.inputStream()).use { it.readBytes() }
+                        } catch (e: Exception) {
+                            Logger.e(e) { "Failed to decompress gzipped WebDAV backup, using raw bytes" }
+                            rawBytes
+                        }
+                    } else {
+                        rawBytes
+                    }
                     try {
                         val backup = protoBuf.decodeFromByteArray(Backup.serializer(), bytes)
                         Pair(SyncData(backup = backup), newETag)
@@ -154,7 +170,14 @@ class WebDavSyncService(
         val byteArray = protoBuf.encodeToByteArray(Backup.serializer(), backup)
         if (byteArray.isEmpty()) throw IllegalStateException("Backup data is empty")
 
-        val body = byteArray.toRequestBody("application/octet-stream".toMediaType())
+        val compressedBytes = ByteArrayOutputStream().use { bos ->
+            GZIPOutputStream(bos).use { gzos ->
+                gzos.write(byteArray)
+            }
+            bos.toByteArray()
+        }
+
+        val body = compressedBytes.toRequestBody("application/octet-stream".toMediaType())
         val headersBuilder = Headers.Builder().add("Authorization", credentials)
         if (eTag.isNotEmpty()) headersBuilder.add("If-Match", eTag)
 
@@ -168,11 +191,13 @@ class WebDavSyncService(
                 if (newETag.isNotEmpty()) syncPreferences.lastSyncEtag().set(newETag)
                 Logger.i { "WebDAV sync upload completed successfully" }
             }
+
             response.code == 412 -> {
                 val message = "Sync conflict detected. Another device modified the remote backup. Retrying next sync."
                 Logger.w { message }
                 notifier.showSyncError(message)
             }
+
             else -> {
                 val bodyStr = response.body.string()
                 throw WebDavException("WebDAV upload failed: $bodyStr")
