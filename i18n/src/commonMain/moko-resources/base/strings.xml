@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Yōkai Ultimate</string>
+    <string name="app_name" translatable="false">Rokku Ultimate</string>
     <string name="app_short_name" translatable="false">Rokku</string>
     <string name="app_normalized_name" translatable="false">Rokku</string>
     <string name="action_menu_overflow_description">More options</string>
