@@ -61,6 +61,7 @@ class SyncNotifier(private val context: Context) {
                 context.getString(AR.string.cancel),
                 NotificationReceiver.cancelSyncPendingBroadcast(context, Notifications.ID_SYNC_PROGRESS),
             )
+            show(Notifications.ID_SYNC_PROGRESS)
         }
     }
 

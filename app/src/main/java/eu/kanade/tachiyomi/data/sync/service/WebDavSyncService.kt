@@ -122,7 +122,10 @@ class WebDavSyncService(
 
         val lastETag = syncPreferences.lastSyncEtag().get()
         val headersBuilder = Headers.Builder().add("Authorization", credentials)
-        if (lastETag.isNotEmpty()) headersBuilder.add("If-None-Match", lastETag)
+        if (lastETag.isNotEmpty()) {
+            val formattedEtag = if (lastETag.startsWith("\"") && lastETag.endsWith("\"")) lastETag else "\"$lastETag\""
+            headersBuilder.add("If-None-Match", formattedEtag)
+        }
 
         val requestUrl = buildWebDavFileUrl()
         val request = GET(requestUrl, headers = headersBuilder.build())
@@ -178,7 +181,10 @@ class WebDavSyncService(
 
         val body = compressedBytes.toRequestBody("application/octet-stream".toMediaType())
         val headersBuilder = Headers.Builder().add("Authorization", credentials)
-        if (eTag.isNotEmpty()) headersBuilder.add("If-Match", eTag)
+        if (eTag.isNotEmpty()) {
+            val formattedEtag = if (eTag.startsWith("\"") && eTag.endsWith("\"")) eTag else "\"$eTag\""
+            headersBuilder.add("If-Match", formattedEtag)
+        }
 
         val requestUrl = buildWebDavFileUrl()
         val request = PUT(requestUrl, headers = headersBuilder.build(), body = body)

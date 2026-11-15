@@ -8,6 +8,12 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 - `Fixes` - Bugfixes
 - `Other` - Technical changes/updates
 
+## [1.10.4]
+
+### Fixes
+- Fix live progress updates in the notification bar during sync: notification now accurately displays progress percentage and the current manga title instead of freezing
+- Fix HTTP 304 Not Modified evaluation for WebDAV (quoted ETags): prevents unnecessary re-downloading and database re-restoration when no changes exist, completing manual syncs in under a second
+
 ## [1.10.3]
 
 ### Additions
