@@ -8,6 +8,12 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 - `Fixes` - Bugfixes
 - `Other` - Technical changes/updates
 
+## [1.10.6]
+
+### Fixes
+- Fix Google Drive OAuth redirect_uri_mismatch: switched to local loopback server authorization (RFC 8252) matching Google Cloud client specifications
+- Seamless Google Drive loopback login: local OAuth receiver automatically captures authorization code and returns to Rokku Ultimate
+
 ## [1.10.5]
 
 ### Additions

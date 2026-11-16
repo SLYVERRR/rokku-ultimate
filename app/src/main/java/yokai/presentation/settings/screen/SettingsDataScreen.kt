@@ -265,6 +265,7 @@ object SettingsDataScreen : ComposableSettings() {
     @Composable
     private fun getSyncGroup(syncPreferences: SyncPreferences): Preference.PreferenceGroup {
         val context = LocalContext.current
+        val scope = rememberCoroutineScope()
         val syncService by syncPreferences.syncService().collectAsState()
         val lastSync by syncPreferences.lastSyncTimestamp().collectAsState()
 
@@ -388,7 +389,7 @@ object SettingsDataScreen : ComposableSettings() {
                             title = stringResource(MR.strings.pref_google_drive_sign_in),
                             subtitle = stringResource(MR.strings.pref_google_drive_sign_in_summary),
                             onClick = {
-                                context.openInBrowser(GoogleDriveSyncService.getAuthUrl())
+                                GoogleDriveSyncService.startOAuthServerAndOpenBrowser(context, scope)
                             },
                         ),
                     )
