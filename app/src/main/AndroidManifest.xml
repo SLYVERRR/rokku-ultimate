@@ -382,6 +382,22 @@
         </activity>
 
         <activity
+            android:name=".ui.setting.track.GoogleDriveLoginActivity"
+            android:label="Google Drive"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="oauth2redirect"
+                    android:scheme="eu.kanade.google.oauth" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".extension.util.ExtensionInstallActivity"
             android:icon="@mipmap/ic_launcher"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"/>

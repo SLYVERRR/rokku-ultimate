@@ -8,6 +8,18 @@ The format is simplified version of [Keep a Changelog](https://keepachangelog.co
 - `Fixes` - Bugfixes
 - `Other` - Technical changes/updates
 
+## [1.10.5]
+
+### Additions
+- Google Drive Cloud Sync: Full bidirectional synchronization with Google Drive via Google Drive REST API v3
+- One-tap Google Drive authentication with pre-configured OAuth 2.0 integration
+- Seamless background syncing of library, categories, read progress, history, and trackers
+
+### Fixes
+- Eliminate notification spam: suppressed repetitive and cancelled sync error popups so notifications only alert on genuine, new events
+- Fix WorkManager background cancellation race condition: prevents active sync jobs from being terminated and throwing "Job was cancelled" when switching screens or triggering auto-sync
+- Avoid WebDAV HTTP 423 Locked / folder creation errors caused by rapid overlapping requests
+
 ## [1.10.4]
 
 ### Fixes

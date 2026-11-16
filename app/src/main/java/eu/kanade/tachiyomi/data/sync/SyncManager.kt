@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.data.backup.create.BackupCreator
 import eu.kanade.tachiyomi.data.backup.models.Backup
 import eu.kanade.tachiyomi.data.backup.restore.BackupRestorer
 import eu.kanade.tachiyomi.data.backup.restore.RestoreOptions
+import eu.kanade.tachiyomi.data.sync.service.GoogleDriveSyncService
 import eu.kanade.tachiyomi.data.sync.service.SyncData
 import eu.kanade.tachiyomi.data.sync.service.SyncService
 import eu.kanade.tachiyomi.data.sync.service.SyncYomiSyncService
@@ -31,6 +32,7 @@ class SyncManager(
         NONE(0),
         SYNCYOMI(1),
         WEBDAV(2),
+        GOOGLE_DRIVE(3),
         ;
 
         companion object {
@@ -48,6 +50,7 @@ class SyncManager(
         val service: SyncService? = when (serviceType) {
             SyncServiceType.SYNCYOMI -> SyncYomiSyncService(context, json, syncPreferences, notifier, protoBuf)
             SyncServiceType.WEBDAV -> WebDavSyncService(context, json, syncPreferences, notifier, protoBuf)
+            SyncServiceType.GOOGLE_DRIVE -> GoogleDriveSyncService(context, json, syncPreferences, notifier, protoBuf)
             SyncServiceType.NONE -> null
         }
 

@@ -19,6 +19,12 @@ class SyncPreferences(
     fun webDavPassword() = preferenceStore.getString("sync_webdav_password", "")
     fun webDavFolder() = preferenceStore.getString("sync_webdav_folder", "yokai")
 
+    fun googleDriveAccessToken() = preferenceStore.getString(Preference.appStateKey("gdrive_access_token"), "")
+    fun googleDriveRefreshToken() = preferenceStore.getString(Preference.appStateKey("gdrive_refresh_token"), "")
+    fun googleDriveUserEmail() = preferenceStore.getString(Preference.appStateKey("gdrive_user_email"), "")
+    fun googleDriveFolder() = preferenceStore.getString("sync_gdrive_folder", "Rokku")
+    fun googleDriveLastVersion() = preferenceStore.getString(Preference.appStateKey("sync_gdrive_version"), "")
+
     fun lastSyncTimestamp() = preferenceStore.getLong(Preference.appStateKey("last_sync_timestamp"), 0L)
     fun lastSyncEtag() = preferenceStore.getString(Preference.appStateKey("sync_etag"), "")
 

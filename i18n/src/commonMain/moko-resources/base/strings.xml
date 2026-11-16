@@ -1284,6 +1284,15 @@
     <string name="pref_sync_service_none">Disabled</string>
     <string name="pref_sync_service_syncyomi">SyncYomi</string>
     <string name="pref_sync_service_webdav">WebDAV</string>
+    <string name="pref_sync_service_google_drive">Google Drive</string>
+    <string name="pref_google_drive_sign_in">Sign in with Google</string>
+    <string name="pref_google_drive_sign_in_summary">Connect your Google account to sync via Google Drive</string>
+    <string name="pref_google_drive_signed_in_as">Connected as: %s</string>
+    <string name="pref_google_drive_folder">Drive folder</string>
+    <string name="pref_google_drive_disconnect">Disconnect Google Drive</string>
+    <string name="google_drive_login_success">Successfully connected to Google Drive</string>
+    <string name="google_drive_login_failed">Google Drive login failed: %s</string>
+    <string name="google_drive_disconnected">Disconnected from Google Drive</string>
     <string name="pref_sync_interval">Sync frequency</string>
     <string name="pref_sync_interval_manual">Manual only</string>
     <string name="pref_sync_interval_30s">Every 30 seconds (Real-time)</string>

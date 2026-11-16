@@ -2,6 +2,7 @@ package yokai.presentation.settings.screen
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,6 +37,7 @@ import eu.kanade.tachiyomi.data.backup.restore.BackupRestoreJob
 import eu.kanade.tachiyomi.data.cache.ChapterCache
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.sync.SyncDataJob
+import eu.kanade.tachiyomi.data.sync.service.GoogleDriveSyncService
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.util.compose.LocalDialogHostState
 import eu.kanade.tachiyomi.util.compose.currentOrThrow
@@ -270,6 +272,7 @@ object SettingsDataScreen : ComposableSettings() {
             0 to stringResource(MR.strings.pref_sync_service_none),
             1 to stringResource(MR.strings.pref_sync_service_syncyomi),
             2 to stringResource(MR.strings.pref_sync_service_webdav),
+            3 to stringResource(MR.strings.pref_sync_service_google_drive),
         )
 
         val syncIntervalEntries = persistentMapOf(
@@ -375,6 +378,51 @@ object SettingsDataScreen : ComposableSettings() {
                         subtitle = "%s",
                     ),
                 )
+            } else if (syncService == 3) {
+                val gdriveEmail by syncPreferences.googleDriveUserEmail().collectAsState()
+                val gdriveRefreshToken by syncPreferences.googleDriveRefreshToken().collectAsState()
+
+                if (gdriveRefreshToken.isEmpty()) {
+                    items.add(
+                        Preference.PreferenceItem.TextPreference(
+                            title = stringResource(MR.strings.pref_google_drive_sign_in),
+                            subtitle = stringResource(MR.strings.pref_google_drive_sign_in_summary),
+                            onClick = {
+                                context.openInBrowser(GoogleDriveSyncService.getAuthUrl())
+                            },
+                        ),
+                    )
+                } else {
+                    val emailDisplay = gdriveEmail.ifEmpty { "Connected" }
+                    items.add(
+                        Preference.PreferenceItem.TextPreference(
+                            title = stringResource(MR.strings.pref_sync_service_google_drive),
+                            subtitle = stringResource(MR.strings.pref_google_drive_signed_in_as, emailDisplay),
+                            onClick = {
+                                context.toast(MR.strings.google_drive_login_success)
+                            },
+                        ),
+                    )
+                    items.add(
+                        Preference.PreferenceItem.EditTextPreference(
+                            pref = syncPreferences.googleDriveFolder(),
+                            title = stringResource(MR.strings.pref_google_drive_folder),
+                            subtitle = "%s",
+                        ),
+                    )
+                    items.add(
+                        Preference.PreferenceItem.TextPreference(
+                            title = stringResource(MR.strings.pref_google_drive_disconnect),
+                            onClick = {
+                                syncPreferences.googleDriveAccessToken().set("")
+                                syncPreferences.googleDriveRefreshToken().set("")
+                                syncPreferences.googleDriveUserEmail().set("")
+                                syncPreferences.googleDriveLastVersion().set("")
+                                context.toast(MR.strings.google_drive_disconnected)
+                            },
+                        ),
+                    )
+                }
             }
 
             items.add(

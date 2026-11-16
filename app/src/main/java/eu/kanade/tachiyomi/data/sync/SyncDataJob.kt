@@ -11,14 +11,15 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
+import androidx.work.WorkInfo
 import co.touchlab.kermit.Logger
 import eu.kanade.domain.sync.SyncPreferences
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.util.system.isOnline
-import eu.kanade.tachiyomi.util.system.jobIsRunning
 import eu.kanade.tachiyomi.util.system.tryToSetForeground
 import eu.kanade.tachiyomi.util.system.withIOContext
 import eu.kanade.tachiyomi.util.system.workManager
+import kotlinx.coroutines.CancellationException
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.concurrent.TimeUnit
@@ -37,7 +38,7 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
                 }
                 return Result.retry()
             }
-            if (context.workManager.jobIsRunning(TAG_MANUAL)) {
+            if (isManualRunning(context)) {
                 if (syncPreferences.syncInterval().get() == -1 && syncPreferences.isSyncEnabled()) {
                     scheduleNext30sCheck(context)
                 }
@@ -51,6 +52,9 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
             try {
                 SyncManager(context).syncData()
                 Result.success()
+            } catch (e: CancellationException) {
+                // Job was cancelled by WorkManager, do not report as error
+                throw e
             } catch (e: Exception) {
                 Logger.e(e) { "SyncDataJob failed" }
                 notifier.showSyncError(e.message)
@@ -82,7 +86,21 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
         private const val TAG_30S_LOOP = "SyncDataJob:30s"
 
         fun isRunning(context: Context): Boolean {
-            return context.workManager.jobIsRunning(TAG_JOB)
+            return try {
+                context.workManager.getWorkInfosByTag(TAG_JOB).get()
+                    .any { it.state == WorkInfo.State.RUNNING }
+            } catch (e: Exception) {
+                false
+            }
+        }
+
+        fun isManualRunning(context: Context): Boolean {
+            return try {
+                context.workManager.getWorkInfosForUniqueWork(TAG_MANUAL).get()
+                    .any { it.state == WorkInfo.State.RUNNING }
+            } catch (e: Exception) {
+                false
+            }
         }
 
         fun setupTask(context: Context, prefInterval: Int? = null) {
@@ -138,8 +156,7 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
             if (!syncPreferences.isSyncEnabled()) {
                 return
             }
-            val wm = context.workManager
-            if (wm.jobIsRunning(TAG_JOB)) {
+            if (isRunning(context)) {
                 return
             }
             val tag = if (manual) TAG_MANUAL else TAG_AUTO
@@ -148,7 +165,7 @@ class SyncDataJob(private val context: Context, workerParams: WorkerParameters) 
                 .addTag(tag)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build()
-            wm.enqueueUniqueWork(tag, ExistingWorkPolicy.KEEP, request)
+            context.workManager.enqueueUniqueWork(tag, ExistingWorkPolicy.KEEP, request)
         }
 
         fun stop(context: Context) {

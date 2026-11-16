@@ -65,11 +65,29 @@ class SyncNotifier(private val context: Context) {
         }
     }
 
+    companion object {
+        private var lastShownError: String? = null
+        private var lastErrorTime: Long = 0L
+    }
+
     fun showSyncError(error: String?) {
         context.notificationManager.cancel(Notifications.ID_SYNC_PROGRESS)
+        val msg = error?.trim() ?: "Unknown error"
+        // Suppress coroutine cancellation noise
+        if (msg.contains("Job was cancelled", ignoreCase = true) || msg.contains("CancellationException", ignoreCase = true)) {
+            return
+        }
+        val now = System.currentTimeMillis()
+        // Do not repeat the exact same notification if it was already shown recently (within 15 minutes)
+        if (msg == lastShownError && (now - lastErrorTime) < 15 * 60 * 1000L) {
+            return
+        }
+        lastShownError = msg
+        lastErrorTime = now
+
         completeNotificationBuilder.apply {
             setContentTitle(context.getString(MR.strings.sync_error))
-            setContentText(error ?: "Unknown error")
+            setContentText(msg)
             show(Notifications.ID_SYNC_COMPLETE)
         }
     }
